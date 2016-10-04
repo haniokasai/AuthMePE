@@ -198,16 +198,16 @@ class AuthMePE extends PluginBase implements Listener{
 		$c = $this->configFile()->getAll();
 		if(md5($password.$this->salt($password)) != $t[$player->getName()]["password"]){
 		  
-			$player->sendMessage(TextFormat::RED."Wrong password!");
+			$player->sendMessage(TextFormat::RED."間違ったパスワードです");
 			$times = $t[$player->getName()]["times"];
 			$left = $c["tries-allowed-to-enter-password"] - $times;
 			if($times < $c["tries-allowed-to-enter-password"]){
-			  $player->sendMessage("§eYou have §l§c".$left." §r§etries left!");
+			  $player->sendMessage("§eあと §l§c".$left." §r§e回!");
 			  $t[$player->getName()]["times"] = $times + 1;
 			  $this->data->setAll($t);
 			  $this->data->save();
 			}else{
-			  $player->kick("\n§cMax amount of tries reached!\n§eTry again §d".$c["tries-allowed-to-enter-password"]." §eminutes later.");
+			  $player->kick("\n§cパスワードミスりすぎ!\n§e §d".$c["tries-allowed-to-enter-password"]." §e分後ログインしなおしてください");
 			  $t[$player->getName()]["times"] = 0;
 			  $this->data->setAll($t);
 			  $this->data->save();
@@ -226,7 +226,7 @@ class AuthMePE extends PluginBase implements Listener{
 		}
 		
 		$this->auth($player, 0);
-		$player->sendMessage(TextFormat::GREEN."You are now logged in.");
+		$player->sendMessage(TextFormat::GREEN."ログインしています");
 	}
 	
 	public function logout(Player $player){
@@ -238,7 +238,7 @@ class AuthMePE extends PluginBase implements Listener{
 		}
 		
 		if(!$this->isLoggedIn($player)){
-			$player->sendMessage(TextFormat::YELLOW."You are not logged in!");
+			$player->sendMessage(TextFormat::YELLOW."ログインしていません!");
 			return false;
 		}
 		
@@ -246,15 +246,15 @@ class AuthMePE extends PluginBase implements Listener{
 		 $player->setHealth($player->getHealth() + 1);
 		 $this->getServer()->getScheduler()->scheduleDelayedTask(new SoundTask($this, $player, 2), 7);
 		 
-		 $this->getServer()->broadcastMessage("- §l§b".$player->getName()." §r§cis now offline!");
+		 $this->getServer()->broadcastMessage("- §l§b".$player->getName()." §r§cはオフラインです");
 		 
-		 $this->getLogger()->info("Player ".$player->getName()." has logged out.");
+		 $this->getLogger()->info("Player ".$player->getName()." はログアウトしました");
 		 
 		 $c = $this->configFile()->getAll();
 		 if($c["vanish-nonloggedin-players"] !== false){
 		   foreach($this->getServer()->getOnlinePlayers() as $p){
 		     $p->hidePlayer($player);
-		     $player->sendPopup("§7You are now invisible");
+		     $player->sendPopup("§7あなたは表示されません！");
 		   }
 		 }else{
 		   
@@ -266,7 +266,7 @@ class AuthMePE extends PluginBase implements Listener{
 	public function register(Player $player, $pw1){
 		$this->getServer()->getPluginManager()->callEvent($event = new PlayerRegisterEvent($this, $player));
 		if($event->isCancelled()){
-			$player->sendMessage("§cError during register!");
+			$player->sendMessage("§c登録中のエラー!");
 			return false;
 		}
 		$t = $this->data->getAll();
@@ -295,7 +295,7 @@ class AuthMePE extends PluginBase implements Listener{
 		$this->getServer()->getPluginManager()->callEvent(new PlayerAuthSessionExpireEvent($this, $player));
 		
 		unset($this->session[$player->getName()]);
-		$player->sendPopup("§7Auth Session Expired!");
+		$player->sendPopup("§7期限切れ!");
 	}
 	
 	public function ban($name){
@@ -342,7 +342,7 @@ class AuthMePE extends PluginBase implements Listener{
 				$m = $event->getMessage();
 				if($m{0} == "/"){
 					$event->getPlayer()->sendTip("§cYou are not allowed to execute commands now!");
-					$event->getPlayer()->sendMessage("§fPlease login by typing your password into chat!");
+					$event->getPlayer()->sendMessage("§fパスワードをチャットに直接入力してください、/registerや/loginはいりません");
 					$event->setCancelled(true);
 				}else{
 			  	$this->login($event->getPlayer(), $event->getMessage());
@@ -351,12 +351,12 @@ class AuthMePE extends PluginBase implements Listener{
 			}else{
 				if(!isset($t[$event->getPlayer()->getName()]["password"])){
 					if(strlen($event->getMessage()) < $this->configFile()->get("min-password-length")){
-			     $event->getPlayer()->sendMessage("§cThe password is too short!\n§cIt shouldn't contain less than §b".$this->configFile()->get("min-password-length")." §ccharacters");
+			     $event->getPlayer()->sendMessage("§cパスワード短すぎ!\n§cIt shouldn't contain less than §b".$this->configFile()->get("min-password-length")." §ccharacters");
 			    }else if(strlen($event->getMessage()) > $this->configFile()->get("max-password-length")){
-			      $event->getPlayer()->sendMessage("§cThe password is too long!\n§cIt shouldn't contain more than §b".$this->configFile()->get("max-password-length")." §ccharacters");
+			      $event->getPlayer()->sendMessage("§cパスワード長すぎ!\n§cIt shouldn't contain more than §b".$this->configFile()->get("max-password-length")." §ccharacters");
 			    }else{
      			$this->register($event->getPlayer(), $event->getMessage());
-					  $event->getPlayer()->sendMessage(TextFormat::YELLOW."Type your password again to confirm.");
+					  $event->getPlayer()->sendMessage(TextFormat::YELLOW."もう一度パスワードをチャットに直接入力してください、/registerや/loginはいりません");
      		}
 					$event->setCancelled(true);
 				}
@@ -365,19 +365,19 @@ class AuthMePE extends PluginBase implements Listener{
 					$this->data->setAll($t);
 					$this->data->save();
 					if(md5($event->getMessage().$this->salt($event->getMessage())) != $t[$event->getPlayer()->getName()]["password"]){
-						$event->getPlayer()->sendMessage(TextFormat::YELLOW."Confirm password ".TextFormat::RED."INCORRECT".TextFormat::YELLOW."!\n".TextFormat::WHITE."Please type your password in chat to start register.");
+						$event->getPlayer()->sendMessage(TextFormat::YELLOW."同じパスワードが ".TextFormat::RED."うたれていません".TextFormat::YELLOW."!\n".TextFormat::WHITE."もう一度最初から登録してください");
 						$event->setCancelled(true);
 						unset($t[$event->getPlayer()->getName()]);
 						$this->data->setAll($t);
 						$this->data->save();
 					}else{
-						$event->getPlayer()->sendMessage(TextFormat::WHITE."Confirm password ".TextFormat::GREEN."CORRECT".TextFormat::YELLOW."!\n".TextFormat::WHITE."Your password is '".TextFormat::AQUA.TextFormat::BOLD.$event->getMessage().TextFormat::WHITE.TextFormat::RESET."'");
+						$event->getPlayer()->sendMessage(TextFormat::WHITE."登録成功。".TextFormat::YELLOW."!\n".TextFormat::WHITE."Your password is '".TextFormat::AQUA.TextFormat::BOLD.$event->getMessage().TextFormat::WHITE.TextFormat::RESET."'");
 						$event->setCancelled(true);
 					}
 				}
 				if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"]) && isset($t[$event->getPlayer()->getName()]["password"])){
 					if($event->getMessage() != "yes" && $event->getMessage() != "no"){
-					   $event->getPlayer()->sendMessage(TextFormat::YELLOW."If you want to login with your every last joined ip everytime, type '".TextFormat::WHITE."yes".TextFormat::YELLOW."'. Else, type '".TextFormat::WHITE."no".TextFormat::YELLOW."'");
+					   $event->getPlayer()->sendMessage(TextFormat::YELLOW."IPアドレスで自動ログインしたいならば　 '".TextFormat::WHITE."yesとチャットにいれて".TextFormat::YELLOW."'. そうでなければ '".TextFormat::WHITE."no".TextFormat::YELLOW."'");
 					   $event->setCancelled(true);
 					}else{
 						 $t[$event->getPlayer()->getName()]["ip"] = $event->getMessage();
@@ -385,7 +385,7 @@ class AuthMePE extends PluginBase implements Listener{
 						 $this->ip->set($event->getPlayer()->getName(), $event->getPlayer()->getAddress());
 						 $this->data->setAll($t);
 						 $this->data->save();
-						 $event->getPlayer()->sendMessage(TextFormat::GREEN."You are now registered!\n".TextFormat::YELLOW."Type your password in chat to login.");
+						 $event->getPlayer()->sendMessage(TextFormat::GREEN."アカウントが存在します!\n".TextFormat::YELLOW."パスワードをチャットに直接入力してください、/registerや/loginはいりません");
 						 $time = $this->configFile()->get("login-timeout");
 						 $this->getServer()->getScheduler()->scheduleDelayedTask(new Task2($this, $event->getPlayer()), ($time * 20));
 						 $event->setCancelled(true);
@@ -419,24 +419,24 @@ class AuthMePE extends PluginBase implements Listener{
 					$this->auth($event->getPlayer(), 1);
 					$event->getPlayer()->sendMessage("§2We remember you by your §6IP §2address!\n".TextFormat::GREEN."You are now logged in.");
 				}else{
-					$event->getPlayer()->sendMessage(TextFormat::WHITE."Please type your password in chat to login.");
+					$event->getPlayer()->sendMessage(TextFormat::WHITE."パスワードをチャットに直接入力してください、/registerや/loginはいりません");
 					$this->ip->set($event->getPlayer()->getName(), $event->getPlayer()->getAddress());
 				  $this->ip->save();
-					$event->getPlayer()->sendPopup(TextFormat::GOLD."Welcome ".TextFormat::AQUA.$event->getPlayer()->getName().TextFormat::GREEN."\nPlease login to play!");
+					$event->getPlayer()->sendPopup(TextFormat::GOLD."Welcome ".TextFormat::AQUA.$event->getPlayer()->getName().TextFormat::GREEN."パスワードをチャットに直接入力してください");
 					$this->getServer()->getScheduler()->scheduleDelayedTask(new Task2($this, $event->getPlayer()), (15 * 20));
 				}
 			}else if($event->getPlayer()->hasPermission("authmepe.login.bypass")){
 					$this->auth($event->getPlayer(), 2);
 					$event->getPlayer()->sendMessage("§6You logged in with permission!\n§aYou are now logged in.");
 			}else{
-				$event->getPlayer()->sendMessage(TextFormat::WHITE."Please type your password in chat to login.");
+				$event->getPlayer()->sendMessage(TextFormat::WHITE."パスワードをチャットに直接入力してください、/registerや/loginはいりません");
 				$this->getServer()->getScheduler()->scheduleDelayedTask(new Task2($this, $event->getPlayer()), (30 * 20));
 				$this->ip->set($event->getPlayer()->getName(), $event->getPlayer()->getAddress());
 				$this->ip->save();
-				$event->getPlayer()->sendPopup(TextFormat::GOLD."Welcome ".TextFormat::AQUA.$event->getPlayer()->getName().TextFormat::GREEN."\nPlease login to play!");
+				$event->getPlayer()->sendPopup(TextFormat::GOLD."Welcome ".TextFormat::AQUA.$event->getPlayer()->getName().TextFormat::GREEN."\nパスワードをチャットに直接入力してください");
 			}
 		}else{
-			$event->getPlayer()->sendMessage("Please type your password in chat to start register.");
+			$event->getPlayer()->sendMessage("パスワードをチャットに直接入力してください、/registerや/loginはいりません");
 		}
 	}
 	
@@ -449,10 +449,10 @@ class AuthMePE extends PluginBase implements Listener{
 				$event->getPlayer()->sendMessage("Please type your email into chat!");
 				$event->setCancelled(true);
 			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"])){
-				$event->getPlayer()->sendMessage("Please type yes/no into chat!");
+				$event->getPlayer()->sendMessage("yesかnoとチャットに入れて");
 				$event->setCancelled(true);
 			}else if(!isset($t[$event->getPlayer()->getName()])){
-				$event->getPlayer()->sendMessage("Please type your new password into chat to register.");
+				$event->getPlayer()->sendMessage("新しいパスワードをチャットに直接入力してください、/registerや/loginはいりません");
 				$event->setCancelled(true);
 			}
 		}
